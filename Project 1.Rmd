@@ -1,0 +1,41 @@
+---
+title: "Stats2 Project1"
+author: "Rayon M"
+date: "1/30/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Libraries
+
+library("tidyverse")
+library("ggplot2")
+library("GGally")
+
+
+```
+
+```{r}
+# Get working directory
+# getwd()
+
+```
+
+```{r}
+# Create dataframe
+AutoM <- read.csv("data1.csv")
+
+view(AutoM)
+head(AutoM)
+
+sum(is.na(AutoM))
+
+#count total missing values in each column of data frame
+sapply(df, function(x) sum(is.na(x)))
+
+```
+
