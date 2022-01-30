@@ -38,5 +38,9 @@ sum(is.na(AutoM))
 #count total missing values in each column of data frame
 sapply(AutoM, function(x) sum(is.na(x)))
 
+new_AutoM <- AutoM %>% rename(Fuel_Type = Engine.Fuel.Type, HorsePower = Engine.HP, Cylinders = Engine.Cylinders, Transmission = Transmission.Type, Doors = Number.of.Doors, Market_Category = Market.Category, Vehicle_Size = Vehicle.Size, Vehicle_Style = Vehicle.Style, Highway_MPG = highway.MPG, City_MPG = city.mpg )
+
+new_AutoM
+
 ```
 
