@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library("tidyverse")
 library("ggplot2")
 library("GGally")
+library("naniar")
 
 
 ```
@@ -38,9 +39,40 @@ sum(is.na(AutoM))
 #count total missing values in each column of data frame
 sapply(AutoM, function(x) sum(is.na(x)))
 
+# rename variables for easier control.
 new_AutoM <- AutoM %>% rename(Fuel_Type = Engine.Fuel.Type, HorsePower = Engine.HP, Cylinders = Engine.Cylinders, Transmission = Transmission.Type, Doors = Number.of.Doors, Market_Category = Market.Category, Vehicle_Size = Vehicle.Size, Vehicle_Style = Vehicle.Style, Highway_MPG = highway.MPG, City_MPG = city.mpg )
 
 new_AutoM
+
+# Function that shows the percentage of missing data
+vis_miss(new_AutoM)
+
+
+```
+
+
+```{r}
+# Create categorical variables within the data
+
+new_AutoM$Make <- as.factor(new_AutoM$Make)
+new_AutoM$Model <- as.factor(new_AutoM$Model)
+new_AutoM$Fuel_Type <- as.factor(new_AutoM$Fuel_Type)
+new_AutoM$Transmission <- as.factor(new_AutoM$Make)
+new_AutoM$Market_Category <- as.factor(new_AutoM$Market_Category)
+new_AutoM$Vehicle_Size <- as.factor(new_AutoM$Vehicle_Size)
+new_AutoM$Vehicle_Style <- as.factor(new_AutoM$Vehicle_Style)
+
+
+```
+
+
+```{r}
+
+#ggpairs(AutoM, columns = 3:8)
+
+AutoM %>% 
+  select (MSRP, Year) %>%
+  ggpairs(mapping = aes(color = Attrition))
 
 ```
 
