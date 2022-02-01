@@ -63,6 +63,7 @@ new_AutoM$Vehicle_Size <- as.factor(new_AutoM$Vehicle_Size)
 new_AutoM$Vehicle_Style <- as.factor(new_AutoM$Vehicle_Style)
 new_AutoM$Cylinders <- as.factor(new_AutoM$Cylinders)
 new_AutoM$Doors <- as.factor(new_AutoM$Doors)
+new_AutoM$Driven_Wheels <- as.factor(new_AutoM$Driven_Wheels)
 
 
 ```
@@ -84,5 +85,24 @@ summary(new_AutoM)
 ```
 ```{r}
 t(aggregate(MSRP~Cylinders, data = new_AutoM, summary))
+```
+
+
+```{r}
+# Plotting the explanatory variables versus the response variable
+
+par(mfrow=c(1,3))
+plot(horsepower,mpg, xlab="horsepower",ylab="mpg")
+new<-data.frame(horsepower=seq(30,300,.1))
+lines(seq(30,300,.1),predict(lm(mpg~horsepower),newdata=new),col="red",lwd=4)
+
+plot(as.factor(cylinders), mpg,xlab="cylinders",ylab="mpg",title="Auto Data Set",col=c(7,32,57,82,107))
+
+plot(weight,mpg)
+new2<-data.frame(weight=seq(1600,5200,1))
+lines(seq(1600,5200,1),predict(lm(mpg~weight),newdata=new2),col="red",lwd=4)
+
+
+
 ```
 
