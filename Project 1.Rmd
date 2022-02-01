@@ -57,10 +57,12 @@ vis_miss(new_AutoM)
 new_AutoM$Make <- as.factor(new_AutoM$Make)
 new_AutoM$Model <- as.factor(new_AutoM$Model)
 new_AutoM$Fuel_Type <- as.factor(new_AutoM$Fuel_Type)
-new_AutoM$Transmission <- as.factor(new_AutoM$Make)
+new_AutoM$Transmission <- as.factor(new_AutoM$Transmission)
 new_AutoM$Market_Category <- as.factor(new_AutoM$Market_Category)
 new_AutoM$Vehicle_Size <- as.factor(new_AutoM$Vehicle_Size)
 new_AutoM$Vehicle_Style <- as.factor(new_AutoM$Vehicle_Style)
+new_AutoM$Cylinders <- as.factor(new_AutoM$Cylinders)
+new_AutoM$Doors <- as.factor(new_AutoM$Doors)
 
 
 ```
@@ -70,9 +72,17 @@ new_AutoM$Vehicle_Style <- as.factor(new_AutoM$Vehicle_Style)
 
 #ggpairs(AutoM, columns = 3:8)
 
-AutoM %>% 
-  select (MSRP, Year) %>%
-  ggpairs(mapping = aes(color = Attrition))
+new_AutoM %>% 
+  select (MSRP, Year, HorsePower, Cylinders, Driven_Wheels, Doors, Highway_MPG, City_MPG) %>%
+  ggpairs(mapping = aes())
 
+```
+
+```{r}
+summary(new_AutoM)
+
+```
+```{r}
+t(aggregate(MSRP~Cylinders, data = new_AutoM, summary))
 ```
 
