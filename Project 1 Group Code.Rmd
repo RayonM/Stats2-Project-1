@@ -1,0 +1,315 @@
+---
+title: "Project 1 Group Code"
+author: "Ely, Kalen, Rayon"
+date: "2/1/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Libraries
+library(dplyr)
+
+```
+
+
+
+
+```{r}
+# Read Data <- This will be different for each of us.
+
+#Ely's read data line
+#car_data = read.csv("~/Desktop/applied_stats/data1.csv")
+
+# Rayon's read data line
+car_data <-  read.csv("data1.csv")
+attach(car_data)
+
+```
+
+
+# Cleaning Data
+
+```{r}
+# Change categorical attributes to factors
+
+car_data$Make = as.factor(car_data$Make)
+car_data$Model = as.factor(car_data$Model)
+car_data$Engine.Fuel.Type = as.factor(car_data$Engine.Fuel.Type)
+car_data$Transmission.Type = as.factor(car_data$Transmission.Type)
+car_data$Driven_Wheels = as.factor(car_data$Driven_Wheels)
+car_data$Vehicle.Size = as.factor(car_data$Vehicle.Size)
+car_data$Market.Category = as.factor(car_data$Market.Category)
+car_data$Vehicle.Style = as.factor(car_data$Vehicle.Style)
+
+# NA
+gg_miss_var(car_data)
+
+
+
+
+# Missing Doors
+
+car_data %>%
+  filter(is.na(Number.of.Doors))
+
+# Other Tesla Model S 2016 have 4 doors - manual fix
+car_data %>%
+  filter(Make == 'Tesla' & Model == 'Model S' & Year == 2016)
+
+car_data[(is.na(car_data$Number.of.Doors)&car_data$Make=='Tesla'),9] = 4
+
+# There are no other 2013 FF Ferraris in our data set, but the other years have 2 doors, and some online research shows thee 2013 does as well - manual fix
+car_data %>%
+  filter(Make == 'Ferrari' & Model =='FF')
+
+car_data[(is.na(car_data$Number.of.Doors)&car_data$Make=='Ferrari'),9] = 2
+
+
+
+
+# Engine Cylinders
+
+car_data %>%
+  filter(is.na(Engine.Cylinders))
+
+
+# Mazda RX Models - These have a rotary engine, so have 0 cylinders
+
+car_data[(is.na(car_data$Engine.Cylinders) & car_data$Make == 'Mazda'),6]= 0
+
+# Other missing cylinder cars are all electric
+
+car_data[(is.na(car_data$Engine.Cylinders) & car_data$Engine.Fuel.Type == 'electric'),6]= 0
+
+
+
+
+# Engine Horsepower
+
+car_data %>%
+  filter(is.na(Engine.HP))
+
+#  Using the base horsepower I can find online for these Some versions have higher horsepower, but this data set does not give us the attributes needed to identify these.
+
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2014),5] = 302
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2015),5] = 329
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2016),5] = 315
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2015),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2016),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2017),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Continental' & Year == 2017),5] =305
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Escape' & Year == 2017),5] = 168
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & Year == 2013),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & Year == 2014),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2015),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2016),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2017),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Freestar' & Year == 2005),5] = 193
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='i-MiEV' & Year == 2014),5] = 66
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2015),5] = 195
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2016),5] = 196
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2017),5] = 197
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2014),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2015),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2016),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='M-Class' & Year == 2015),5] = 302
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='MKZ' & Year == 2017),5] = 240
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & Year == 2013),5] = 154
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & Year == 2014),5] = 154
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & Year == 2015),5] = 109
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & Year == 2016),5] = 109
+
+
+
+
+# Double Check NA Values - Looks good!
+gg_miss_var(car_data)
+
+
+
+# Unnown Transmission Types
+
+car_data %>%
+  filter(Transmission.Type == 'UNKNOWN')
+
+# Based off of other RAM 150s
+car_data[(car_data$Transmission.Type == 'UNKNOWN' & car_data$Model=='RAM 150'),7] = 'MANUAL'
+
+# Based off of online research
+car_data[(car_data$Transmission.Type == 'UNKNOWN' & car_data$Model=='Achieva'),7] = 'AUTOMATIC'
+
+# Other 3 models with unknown transmissions don't have enough identifiable info to fix, so we'll drop these 9 rows.
+
+car_data = car_data %>%
+  filter(Transmission.Type != 'UNKNOWN')
+
+# Refactor transmission type to exclude UNKNOWN
+car_data$Transmission.Type = as.character(car_data$Transmission.Type)
+car_data$Transmission.Type = as.factor(car_data$Transmission.Type)
+
+
+
+
+
+summary(car_data)
+
+
+
+
+
+# Seeing odd values for max HP, Engine Cylinders,MPG, and MSRP
+
+# HP and MSRP looks correct
+car_data %>%
+  filter(Engine.HP > 700)
+
+# Cylinders looks correct based on car and HP
+car_data %>%
+  filter(Engine.Cylinders > 10)
+
+# Highway MPG for this item is false - manual fix based on online research
+car_data %>%
+  filter(highway.MPG > 300)
+
+car_data[car_data$highway.MPG == 354,13] = 32
+
+# All high city mpgs are electric, as expected
+car_data %>%
+  filter(city.mpg > 100)
+
+
+
+
+
+# N/A Strings in Market Category
+
+# These N/A Values range over a wide variety of car types. We'll choose to keep these values in the data set unless we need to create a model using market category
+
+head(
+  car_data %>%
+    filter(Market.Category == 'N/A')
+    )
+```
+
+
+
+
+
+
+
+# Training / Test Split
+
+```{r}
+set.seed(1234)
+index = sample(1:dim(car_data)[1],9525,replace=F)
+
+train = car_data[index,]
+
+test_validate = car_data[-index,]
+test_index = sample(1:dim(test_validate)[1],1190,replace=F)
+
+train = car_data[index,]
+test = test_validate[test_index,]
+validate = test_validate[-test_index,]
+
+head(train)
+head(test)
+head(validate)
+```
+
+
+# EDA
+
+
+```{r}
+library(ggplot2)
+
+
+head(train)
+
+pairs(train[,c(16,3,5,6,9,13,14,15)])
+
+```
+
+
+**Initial Findings**
+
+  * City and highway mpg are highly correlated
+ 
+  * Seeing some correlation between HP, Cylinders, and MPG as well
+ 
+```{r}
+pairs(train[,c(15,5,6,13,14)])
+```
+
+**Findings**
+ 
+  * We'll need to choose between HP vs Cylinders and Highway mpg vs City mpg
+ 
+```{r}
+pairs(train[,c(16,5,6)])
+
+pairs(train[,c(16,13,14)])
+
+# highway mpg is statistically significant when used as a predictor for popularity while city mpg is not. We'll go with highway mpg
+summary(lm(MSRP ~ highway.MPG, data = train))[4]
+summary(lm(MSRP ~ city.mpg, data = train))[4]
+
+# Both are statistically significant - next we'll test to see how they hold up when paired with highway mpg
+summary(lm(MSRP ~ Engine.HP, data = train))[4]
+summary(lm(MSRP ~ Engine.Cylinders, data = train))[4]
+
+pairs(train[,c(16,5,6,13)])
+summary(lm(Popularity ~ Engine.HP + highway.MPG, data = train))[4]
+summary(lm(Popularity ~ Engine.Cylinders + highway.MPG, data = train))[4]
+
+# Seeing some collinearity between mpg, horsepower, and cylinders. We'll move forward with caution using highway mpg and cylinders, understanding that we may ultimately need to decide between the two.
+
+head(train)
+
+#Numerical
+pairs(train[,c(16,6,9,13,15)])
+
+#Seeing some correlation with MSRP vs Fuel Type and MSRP vs Make, and MSRP vs Year
+pairs(train[,c(16,1,3,4)])
+
+pairs(train[,c(16,7:11)])
+```
+## Importance of Popularity:
+
+#### Popularity is broken down by make - not by model. Also, no two makes have the same popularity. This means that popularity has a 1-1 relationship with Make, so we only need one of them
+
+```{r}
+car_data %>%
+  select(Make, Model, Popularity) %>%
+  group_by(Make) %>%
+  summarize(count = n(), max = max(Popularity), min = min(Popularity)) %>%
+  arrange(max)
+```
+
+#### Popularity vs MSRP
+
+```{r}
+
+# Seeing a slight negative trend between popularity score and MSRP
+train %>%
+  ggplot(aes(x = Popularity, y = MSRP)) +
+  geom_point() +
+  geom_smooth(method = 'lm', color = 'red')
+
+summary(lm(MSRP~Popularity, data = train))
+```
+
+<br>
+
+**Findings**
+
+  * There exists a negative correlation between popularity score and MSRP
+   
+    * This may indicate that more affordable cars are more popular
+   
+  * The relationship between popularity and MRSP is statistically significant
