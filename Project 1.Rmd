@@ -106,3 +106,178 @@ lines(seq(1600,5200,1),predict(lm(mpg~weight),newdata=new2),col="red",lwd=4)
 
 ```
 
+
+
+```{r}
+ # $ Make             : Factor w/ 48 levels
+ # $ Model            : Factor w/ 915 levels
+ # $ Year             : int
+ # $ Engine.Fuel.Type : Factor w/ 11 levels
+ # $ Engine.HP        : num
+ # $ Engine.Cylinders : num
+ # $ Transmission.Type: Factor w/ 4 levels
+ # $ Driven_Wheels    : Factor w/ 4 levels 
+ # $ Number.of.Doors  : num
+ # $ Market.Category  : Factor w/ 72 levels
+ # $ Vehicle.Size     : Factor w/ 3 levels
+ # $ Vehicle.Style    : Factor w/ 16 levels
+ # $ highway.MPG      : num
+ # $ city.mpg         : int
+ # $ Popularity       : int
+ # $ MSRP             : int  
+
+# Make Categorical Variable Summary
+t(aggregate(MSRP~Make,data=car_data,summary))
+
+
+```
+
+```{r}
+# Model Categorical Variable Summary
+t(aggregate(MSRP~Model,data=car_data,summary))
+```
+
+```{r}
+# Engine Fuel Type Categorical Variable Summary
+t(aggregate(MSRP~Engine.Fuel.Type,data=car_data,summary))
+```
+
+```{r}
+# Transmission Type Categorical Variable Summary
+t(aggregate(MSRP~Transmission.Type,data=car_data,summary))
+
+```
+
+```{r}
+# Driven_Wheels Categorical Variable Summary
+t(aggregate(MSRP~Driven_Wheels,data=car_data,summary))
+
+```
+
+```{r}
+# Market Category Categorical Variable Summary
+t(aggregate(MSRP~Market.Category,data=car_data,summary))
+```
+
+```{r}
+# Vehicle Size Categorical Variable Summary
+t(aggregate(MSRP~Vehicle.Size,data=car_data,summary))
+```
+
+```{r}
+# Vehicle Style Categorical Variable Summary
+t(aggregate(MSRP~Vehicle.Style,data=car_data,summary))
+```
+
+
+
+
+```{r}
+
+# I think we should convert Engine.Cylinders to a factor. If we do so, we see that the data set only has 3 records with 16 Cylinders. We may need to remove them when performing Cross Validation, etc.
+Auto <- car_data
+
+Auto$Engine.Cylinders <- as.factor(Auto$Engine.Cylinders)
+
+summary(Auto)
+attach(Auto)
+```
+
+# EDA Categorical
+```{r}
+
+# Plot Make with MSRP to see the distribution.
+plot(Make,MSRP, xlab="Make",ylab="MSRP")
+# Observed that the Make - Bugatti was higher than the other Makes. Also observed a few outliers for other vehicles. Interesting note is that if we remove the 16 cylinder vehicles it removes all the Bugattis.
+
+# Plot Model to see its distribution against MSRP.
+plot(Model,MSRP, xlab="Make",ylab="MSRP") # Observed Trends probably hold on including in the model.
+
+# Plot Engine.Fuel.Type with MSRP to see the distribution.
+plot(Engine.Fuel.Type,MSRP, xlab="Engine Fuel Type",ylab="MSRP") # Possibly correlated with Make
+
+
+# Plot Engine.Cylinders with MSRP to see the distribution.
+plot(Engine.Cylinders,MSRP, xlab="Engine Cylinders",ylab="MSRP") # Nice gradual increasing Trend. Will add to the model.
+
+# Plot Transmission Type with MSRP to see the distribution.
+plot(Transmission.Type,MSRP, xlab="Transmission Type",ylab="MSRP") # Slight descrease in the means. Automated Manual had the outliers. Interesting enough those were the Bugattis.
+
+
+# Plot Driven Wheels with MSRP to see the distribution.
+plot(Driven_Wheels,MSRP, xlab="Wheels",ylab="MSRP") # Slight descrease in the means. Automated Manual had the outliers. Interesting enough those were the Bugattis.
+
+# Plot Market Category with MSRP to see the distribution.
+plot(Market.Category,MSRP, xlab="Market Category",ylab="MSRP") # One to watch. Would start without it. However, I could see a potential for it to be included.
+
+
+# Plot Vehicle Size with MSRP to see the distribution.
+plot(Vehicle.Size,MSRP, xlab="Vehicle Size",ylab="MSRP") # Couple outliers: Buggati and the MayBach. Otherwise Means are pretty even.
+
+
+# Plot Vehicle Style with MSRP to see the distribution.
+plot(Vehicle.Style,MSRP, xlab="Vehicle Style",ylab="MSRP") # Couple outliers: Buggati and the MayBach. Otherwise Means are pretty even.
+
+
+
+```
+
+
+# EDA Numerical
+
+```{r}
+# Year
+plot(Year,MSRP, xlab="Year",ylab="MSRP")
+new<-data.frame(Year=seq(1990,2020,1))
+lines(seq(1990,2020,1),predict(lm(MSRP~Year),newdata=new),col="red",lwd=4) # MSRP may need to be log transformed.
+
+#Horsepower
+plot(Engine.HP,MSRP, xlab="Horsepower",ylab="MSRP")
+new<-data.frame(Engine.HP=seq(50,1010,1))
+lines(seq(50,1010,1),predict(lm(MSRP~Engine.HP),newdata=new),col="red",lwd=4) # MSRP may need to be log Transformed to get a better pairing with Horsepower
+
+#Number of Doors
+plot(Number.of.Doors,MSRP, xlab="Number of Doors",ylab="MSRP")
+new<-data.frame(Number.of.Doors=seq(1,10,1))
+lines(seq(1,10,1),predict(lm(MSRP~Number.of.Doors),newdata=new),col="red",lwd=4) # Couple outliers but not needed for the model
+
+#Highway MPG
+plot(highway.MPG,MSRP, xlab="Highway Miles",ylab="MSRP")
+new<-data.frame(highway.MPG=seq(0,1000,1))
+lines(seq(0,1000,1),predict(lm(MSRP~highway.MPG),newdata=new),col="red",lwd=4)
+
+
+#City MPG
+plot(city.mpg,MSRP, xlab="City Miles",ylab="MSRP")
+new<-data.frame(city.mpg=seq(0,1000,1))
+lines(seq(0,1000,1),predict(lm(MSRP~city.mpg),newdata=new),col="red",lwd=4)
+
+#Popularity
+plot(Popularity,MSRP, xlab="Popularity",ylab="MSRP")
+new<-data.frame(Popularity=seq(1,10000,1))
+lines(seq(1,10000,1),predict(lm(Popularity~city.mpg),newdata=new),col="red",lwd=4)
+
+
+```
+
+```{r}
+
+summary(Auto)
+
+```
+
+
+# Multicollinearity
+
+```{r}
+
+pairs (Auto[, -c(1, 2,4,5, 7,8, 10, 11, 12, 15)])
+
+Auto %>% 
+  select (MSRP, Year, Engine.HP, Number.of.Doors, highway.MPG, city.mpg) %>%
+  ggpairs(mapping = aes())
+
+
+```
+
+
