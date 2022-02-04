@@ -25,10 +25,10 @@ library("naniar")
 # Read Data <- This will be different for each of us.
 
 #Ely's read data line
-#car_data = read.csv("~/Desktop/applied_stats/data1.csv")
+car_data = read.csv("~/Desktop/applied_stats/data1.csv")
 
 # Rayon's read data line
-car_data <-  read.csv("data1.csv")
+#car_data <-  read.csv("data1.csv")
 attach(car_data)
 
 ```
@@ -55,8 +55,11 @@ car_data$Vehicle.Style = as.factor(car_data$Vehicle.Style)
 # Evaluate if there is missing information - NA
 gg_miss_var(car_data)
 
-# Visualize the missing data.
-vis_miss(new_AutoM)
+
+
+# Visualize the missing data. DOES NOT WORK
+
+vis_miss(new_AutoM) # Where is new_AutoM?
 ```
 
 
@@ -328,3 +331,152 @@ summary(lm(MSRP~Popularity, data = train))
     * This may indicate that more affordable cars are more popular
    
   * The relationship between popularity and MRSP is statistically significant
+  
+  
+  
+# Model Creation Work
+
+
+
+
+## Choosing potential predictors
+```{r}
+
+# Checking for multicolinnearity - Not including Make, since it is dependent on popularity
+
+head(train[,c(3,4,6,7,8,9,10,11,13,16)])
+
+library(car)
+
+# All VIF is under 10 (though highway MPG is close), so we'll move forward with caution
+model_attributes = train[,c(3,4,6:11,13,15,16)]
+full.model<-lm(MSRP~.,data=model_attributes)
+vif(full.model)[,3]^2
+```
+# Should we removing NA from Market Categories? Probably not.
+```{r}
+train %>%
+  filter(Market.Category != 'N/A')
+test %>%
+  filter(Market.Category != 'N/A')
+validate %>%
+  filter(Market.Category != 'N/A')
+
+# Removing them takes out A LOT of rows. Maybe best to just not include this attribute...
+```
+
+# Predict.Regsubsets fxn
+
+```{r}
+predict.regsubsets =function (object , newdata ,id ,...){
+  form=as.formula (object$call [[2]])
+  mat=model.matrix(form ,newdata )
+  coefi=coef(object ,id=id)
+  xvars=names(coefi)
+  mat[,xvars]%*%coefi
+}
+```
+
+# Variable Selection (Not including market categories)
+
+## Ely Note: This seems wild. I'm clearly doing something wrong here
+
+```{r}
+library(leaps)
+reg.fwd = regsubsets(MSRP~.,data=train[,c(3,4,6:9,11,13,15,16)],method="forward",nvmax=8)
+
+data
+
+
+testASE<-c()
+
+for (i in 1:8){
+  predictions<-predict.regsubsets(object=reg.fwd,newdata=test,id=i) 
+  testASE[i]<-mean((test$MSRP-predictions)^2)
+}
+
+par(mfrow=c(1,1))
+plot(1:8,testASE,type="l",xlab="# of predictors",ylab="test vs train ASE",ylim=c(0,3000000000))
+index<-which(testASE==min(testASE))
+points(index,testASE[index],col="red",pch=10)
+rss<-summary(reg.fwd)$rss
+lines(1:8,rss/9525,lty=3,col="blue")   #Dividing by 192 since ASE=RSS/sample size NEED TO ADJUST SAMPLE SIZE DIVISION!!!!
+```
+
+
+
+# Lasso Attempt
+
+```{r}
+library(glmnet)
+#Formatting data for GLM net
+x=model.matrix(MSRP~.,train[,c(3,4,6:9,11,13,15,16)])[,-1]
+y=train$MSRP
+
+xtest=model.matrix(MSRP~.,test[,c(3,4,6:9,11,13,15,16)])[,-1]
+ytest=test$MSRP
+
+
+
+x=model.matrix(MSRP~.,train)[,-1]
+y=train$MSRP
+
+xtest=model.matrix(MSRP~.,test)[,-1]
+ytest=test$MSRP
+
+
+grid=10^seq(10,-2, length =100)
+lasso.mod=glmnet(x,y,alpha=1, lambda =grid)
+
+cv.out=cv.glmnet(x,y,alpha=1) #alpha=1 performs LASSO
+plot(cv.out)
+bestlambda<-cv.out$lambda.min  #Optimal penalty parameter.  You can make this call visually.
+lasso.pred=predict (lasso.mod ,s=bestlambda ,newx=xtest)
+
+testMSE_LASSO<-mean((ytest-lasso.pred)^2)
+testMSE_LASSO
+
+
+coef(lasso.mod,s=bestlambda)
+```
+
+
+# Here's the model LASSO picked - obviously some major collinearities here. Need to work through!
+```{r}
+model = lm(MSRP~Make + Model + Year + Engine.Fuel.Type + Engine.Cylinders+Transmission.Type+Driven_Wheels+Number.of.Doors+Market.Category+Vehicle.Size+Vehicle.Style+highway.MPG+city.mpg+Popularity, data = train)
+
+summary(model)
+
+par(mfrow=c(2,2))
+plot(model)
+
+
+# Slight adjustment - removed obvious collinearities. Still need work
+
+model = lm(MSRP~Model + Year + Engine.Fuel.Type + Engine.Cylinders+Transmission.Type+Driven_Wheels+Number.of.Doors+Market.Category+Vehicle.Style+highway.MPG+Popularity, data = train)
+
+summary(model)
+
+par(mfrow=c(2,2))
+plot(model)
+
+
+```
+
+# Initial Model - WIP
+
+### I chose not to include engine fuel type, since the only significant variable in that set was flex-fuel (premium unleaded required/E85) 
+
+```{r}
+model = lm(MSRP~Year+Transmission.Type+Driven_Wheels+Number.of.Doors+Vehicle.Size+Popularity, data = train)
+
+summary(model)
+
+par(mfrow=c(2,2))
+plot(model)
+```
+
+
+### This model still is not great - I wonder if we should adjust our response variable ...
+### Seeing evidence of violations of normality and equal variance
+
