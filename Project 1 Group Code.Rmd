@@ -25,10 +25,10 @@ library("naniar")
 # Read Data <- This will be different for each of us.
 
 #Ely's read data line
-car_data = read.csv("~/Desktop/applied_stats/data1.csv")
+#car_data = read.csv("~/Desktop/applied_stats/data1.csv")
 
 # Rayon's read data line
-#car_data <-  read.csv("data1.csv")
+car_data <-  read.csv("data1.csv")
 attach(car_data)
 
 ```
@@ -273,7 +273,7 @@ pairs(train[,c(16,5,6)])
 
 pairs(train[,c(16,13,14)])
 
-# highway mpg is statistically significant when used as a predictor for popularity while city mpg is not. We'll go with highway mpg
+# highway mpg is statistically significant when used as a predictor for popularity (meant MSRP?) while city mpg is not. We'll go with highway mpg
 summary(lm(MSRP ~ highway.MPG, data = train))[4]
 summary(lm(MSRP ~ city.mpg, data = train))[4]
 
