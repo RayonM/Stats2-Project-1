@@ -16,7 +16,7 @@ library("tidyverse")
 library("ggplot2")
 library("GGally")
 library("naniar")
-
+library("car")
 
 ```
 
@@ -281,3 +281,102 @@ Auto %>%
 ```
 
 
+```{r}
+Auto %>% 
+  select (MSRP, Make, Model ) %>%
+  ggpairs(mapping = aes())
+
+pairs(Auto[, c(MSRP, Make, Model)])
+pairs (Auto[, -c(3,5,9,13,14,15)])
+
+```
+
+
+
+
+#VIF
+```{r}
+# First Pass
+num.model <- lm(MSRP~Year + Engine.HP + Number.of.Doors + highway.MPG + city.mpg, data = Auto)
+vif(num.model)
+
+#Second Pass with Categorical Variables
+num_Fact.model <- lm(MSRP~Year + Engine.HP + Number.of.Doors + highway.MPG + city.mpg + Make + Year + Engine.Fuel.Type + Engine.HP + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style, data = Auto)
+vif(num_Fact.model)[,3]^2
+
+#Third Pass without highway.MPG, Number.of.Doors. Potential Final Model.
+num_Fact2.model <- lm(MSRP~Year + Engine.HP + city.mpg + Make + Year + Engine.Fuel.Type + Engine.HP + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style, data = Auto)
+vif(num_Fact2.model)[,3]^2
+
+# + Engine.Cylinders + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style
+# Engine.cylinders caused the error: "there are aliased coefficients in the model" to occur. It's perfectly correlated to something.
+# Dropping Highway.MPG from the Model 
+# Dropping Number of Doors from the Model
+```
+#Residuals
+
+```{r}
+plot(num_Fact2.model$fitted.values, num_Fact2.model$residuals,xlab="Fitted Values",ylab="Residuals")
+plot(horsepower,horse.model$residuals,xlab="Horsepower",ylab="Residuals")
+
+plot(num_Fact2.model)
+
+```
+
+# Log Transform MSRP
+
+```{r}
+my.model <- lm(log(MSRP)~Year + Engine.HP + city.mpg + Make + Year + Engine.Fuel.Type + Engine.HP + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style, data = Auto)
+
+
+plot(my.model$fitted.values,my.model$residuals,xlab="Fitted Values",ylab="Residuals")
+#plot(horsepower,my.model$residuals,xlab="Horsepower",ylab="Residuals")
+qqnorm(my.model$residuals)
+qqline(my.model$residuals)
+
+
+```
+# Test Terms in the Model
+
+```{r}
+summary(my.model)
+
+```
+
+
+
+```{r}
+reg.fwd=regsubsets(log(MSRP)~Year + Engine.HP + city.mpg + Make + Year + Engine.Fuel.Type + Engine.HP + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style,data=Auto,method="forward",nvmax=20)
+
+summary(reg.fwd)$adjr2
+summary(reg.fwd)$rss
+summary(reg.fwd)$bic
+
+```
+
+
+```{r}
+par(mfrow=c(1,3))
+bics<-summary(reg.fwd)$bic
+plot(1:20,bics,type="l",ylab="BIC",xlab="# of predictors")
+index<-which(bics==min(bics))
+points(index,bics[index],col="red",pch=10)
+
+adjr2<-summary(reg.fwd)$adjr2
+plot(1:20,adjr2,type="l",ylab="Adjusted R-squared",xlab="# of predictors")
+index<-which(adjr2==max(adjr2))
+points(index,adjr2[index],col="red",pch=10)
+
+rss<-summary(reg.fwd)$rss
+plot(1:20,rss,type="l",ylab="train RSS",xlab="# of predictors")
+index<-which(rss==min(rss))
+points(index,rss[index],col="red",pch=10)
+
+
+```
+
+```{r}
+summary(lm(MSRP ~ highway.MPG, data = train))[4]
+summary(lm(MSRP ~ city.mpg, data = train))[4]
+
+```
