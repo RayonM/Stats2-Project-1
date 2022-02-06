@@ -47,6 +47,7 @@ car_data$Driven_Wheels = as.factor(car_data$Driven_Wheels)
 car_data$Vehicle.Size = as.factor(car_data$Vehicle.Size)
 car_data$Market.Category = as.factor(car_data$Market.Category)
 car_data$Vehicle.Style = as.factor(car_data$Vehicle.Style)
+car_data$Engine.Cylinders = as.factor(car_data$Engine.Cylinders)
 
 
 ```
@@ -218,6 +219,15 @@ head(
 
 
 
+```{r}
+# Added this section for Further data cleaning.
+# Thoughts:
+#   1. We should remove all vehicles above $500,000. The data set of car beyond that point is very small. 
+#   2. We should eliminate duplicates. The data is filled with a lot of duplicate records.
+#   3. After this, we'll be left with what looks like duplicates but they won't. the records remaining will have some matches except on the MSRP column. We should average those and keep one with the mean MSRP.
+
+```
+
 
 
 
@@ -229,7 +239,6 @@ set.seed(1234)
 index = sample(1:dim(car_data)[1],9525,replace=F)
 
 train = car_data[index,]
-
 test_validate = car_data[-index,]
 test_index = sample(1:dim(test_validate)[1],1190,replace=F)
 
@@ -256,9 +265,11 @@ pairs(train[,c(16,3,5,6,9,13,14,15)])
 
 **Initial Findings**
 
-  * City and highway mpg are highly correlated
+  * City and highway mpg are highly correlated.
+  * Rayon - I agree with this. 
  
-  * Seeing some correlation between HP, Cylinders, and MPG as well
+  * Seeing some correlation between HP, Cylinders, and MPG (highway and city) as well
+  * Rayon - I agree with this.
  
 ```{r}
 pairs(train[,c(15,5,6,13,14)])
@@ -273,7 +284,7 @@ pairs(train[,c(16,5,6)])
 
 pairs(train[,c(16,13,14)])
 
-# highway mpg is statistically significant when used as a predictor for popularity (meant MSRP?) while city mpg is not. We'll go with highway mpg
+# highway mpg is statistically significant when used as a predictor for popularity (did you mean MSRP?) while city mpg is not. We'll go with highway mpg
 summary(lm(MSRP ~ highway.MPG, data = train))[4]
 summary(lm(MSRP ~ city.mpg, data = train))[4]
 
@@ -479,4 +490,25 @@ plot(model)
 
 ### This model still is not great - I wonder if we should adjust our response variable ...
 ### Seeing evidence of violations of normality and equal variance
+
+
+
+```{r}
+# Logged the response variable but seeing a sharp band in teh Residuals. The qqplot looks a lot better. However, we can see that there are some outliers in the data. Maybe we should some more cleaning. Left a comment up above.
+
+
+logmodel = lm(log(MSRP)~Year+Transmission.Type+Driven_Wheels+Number.of.Doors+Vehicle.Size+Popularity, data = train)
+
+summary(logmodel)
+
+par(mfrow=c(2,2))
+plot(logmodel)
+
+```
+
+
+
+
+
+
 
