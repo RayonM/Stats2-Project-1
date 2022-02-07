@@ -255,7 +255,7 @@ lines(seq(0,1000,1),predict(lm(MSRP~city.mpg),newdata=new),col="red",lwd=4)
 #Popularity
 plot(Popularity,MSRP, xlab="Popularity",ylab="MSRP")
 new<-data.frame(Popularity=seq(1,10000,1))
-lines(seq(1,10000,1),predict(lm(Popularity~city.mpg),newdata=new),col="red",lwd=4)
+lines(seq(1,10000,1),predict(lm(MSRP~Popularity),newdata=new),col="red",lwd=4)
 
 
 ```
@@ -270,23 +270,44 @@ summary(Auto)
 # Multicollinearity
 
 ```{r}
+attach(Auto)
 
 pairs (Auto[, -c(1, 2,4,5, 7,8, 10, 11, 12, 15)])
 
 Auto %>% 
   select (MSRP, Year, Engine.HP, Number.of.Doors, highway.MPG, city.mpg) %>%
-  ggpairs(mapping = aes())
+  ggpairs(mapping = aes(color = Make), cardinality_threshold = 28)
+
+
+Auto %>% 
+  select (MSRP, Year, Engine.HP, Number.of.Doors, highway.MPG, city.mpg) %>%
+  ggpairs(mapping = aes(color = Model), cardinality_threshold = 28)
+
+
+Auto %>% 
+  select (MSRP, Year, Engine.HP, Number.of.Doors, highway.MPG, city.mpg) %>%
+  ggpairs(mapping = aes(color = Engine.Fuel.Type), cardinality_threshold = 28)
+
+ # $ Make             : Factor w/ 48 levels (Include in Model)
+ # $ Model            : Factor w/ 915 levels (Dont include in Model)
+ # $ Engine.Fuel.Type : Factor w/ 11 levels (Include in Model
+ # $ Engine.Cylinders : Factor w/ 9 levels (include in Model)
+ # $ Transmission.Type: Factor w/ 4 levels (include in Model)
+ # $ Driven_Wheels    : Factor w/ 4 levels (include in Model)
+ # $ Market.Category  : Factor w/ 72 levels (Don't include in Model)
+ # $ Vehicle.Size     : Factor w/ 3 levels (Include in Model)
+ # $ Vehicle.Style    : Factor w/ 16 levels
 
 
 ```
 
 
 ```{r}
-Auto %>% 
-  select (MSRP, Make, Model ) %>%
-  ggpairs(mapping = aes())
+# Auto %>% 
+#  select (MSRP, Make, Model ) %>%
+#  ggpairs(mapping = aes())
 
-pairs(Auto[, c(MSRP, Make, Model)])
+#pairs(Auto[, c(MSRP, Make, Model)])
 pairs (Auto[, -c(3,5,9,13,14,15)])
 
 ```
@@ -316,10 +337,15 @@ vif(num_Fact2.model)[,3]^2
 #Residuals
 
 ```{r}
+
+#Fix this to be a simple linear regression
+
 plot(num_Fact2.model$fitted.values, num_Fact2.model$residuals,xlab="Fitted Values",ylab="Residuals")
 plot(horsepower,horse.model$residuals,xlab="Horsepower",ylab="Residuals")
 
 plot(num_Fact2.model)
+
+write.csv(Auto, "Auto.csv")
 
 ```
 
@@ -328,11 +354,20 @@ plot(num_Fact2.model)
 ```{r}
 my.model <- lm(log(MSRP)~Year + Engine.HP + city.mpg + Make + Year + Engine.Fuel.Type + Engine.HP + Transmission.Type + Driven_Wheels + Vehicle.Size + Vehicle.Style, data = Auto)
 
+my.model <- lm(log(MSRP)~Year + Engine.HP + Number.of.Doors + city.mpg + Make + Model + Engine.Fuel.Type + Driven_Wheels + Market.Category + Transmission.Type, data = Auto)
+
+my.model2 <-  lm(MSRP ~Year + Engine.HP + Engine.Cylinders + Number.of.Doors + highway.MPG + city.mpg + Make + Model +  Engine.Fuel.Type + Transmission.Type + Driven_Wheels + Market.Category + Vehicle.Size + Vehicle.Style, data = Auto)
 
 plot(my.model$fitted.values,my.model$residuals,xlab="Fitted Values",ylab="Residuals")
 #plot(horsepower,my.model$residuals,xlab="Horsepower",ylab="Residuals")
 qqnorm(my.model$residuals)
 qqline(my.model$residuals)
+
+
+plot(my.model2$fitted.values,my.model2$residuals,xlab="Fitted Values",ylab="Residuals")
+#plot(horsepower,my.model$residuals,xlab="Horsepower",ylab="Residuals")
+qqnorm(my.model2$residuals)
+qqline(my.model2$residuals)
 
 
 ```
@@ -380,3 +415,273 @@ summary(lm(MSRP ~ highway.MPG, data = train))[4]
 summary(lm(MSRP ~ city.mpg, data = train))[4]
 
 ```
+
+
+
+```{r}
+
+library(tidyr)
+spread(Auto, key = Market.Category, value=MSRP)
+split(Auto, f = names(Auto))
+
+split(Auto, f = Auto$Market.Category)
+
+Auto
+
+```
+
+
+
+
+
+```{r}
+
+# Collaborated with Braden to make this code.
+
+Market_categories_to_binary <- function(df){
+  
+  split_categories <- str_split(string=df[,"Market.Category"], pattern=",")  
+  
+  
+  # Get a character vector of the unique categories
+  unique_categories <- unique(unlist(split_categories))
+  
+  # Remove N/A from unique_categories vector
+  unique_categories <- unique_categories[unique_categories != "N/A"]
+  
+  # Remove High-Performance from unique_categories vector
+  unique_categories <- unique_categories[unique_categories != "High-Performance"] 
+  
+  # Add all the new columns, initialized to zero
+  for(category_index in 1:length(unique_categories)){
+    
+    category_name <- unique_categories[category_index]
+    
+    # Create a column of all zeros with this name
+    df[,category_name] <- rep(0, nrow(df))
+  }
+  
+  
+  for(row_index in 1:length(split_categories)){
+    
+    categories <- split_categories[[row_index]]
+    
+    if("Factory Tuner" %in% categories){
+      df[row_index, "Factory Tuner"] <- 1
+    }
+    
+    if(("High-Performance" %in% categories) | ("Performance" %in% categories)){
+      df[row_index, "Performance"] <- 1
+    }
+    
+    if("Luxury" %in% categories){
+      df[row_index, "Luxury"] <- 1
+    }
+    
+    if("Flex Fuel" %in% categories){
+      df[row_index, "Flex Fuel"] <- 1
+    }
+    
+    if("Hatchback" %in% categories){
+      df[row_index, "Hatchback"] <- 1
+    }
+    
+    if("Hybrid" %in% categories){
+      df[row_index, "Hybrid"] <- 1
+    }
+    
+    if("Diesel" %in% categories){
+      df[row_index, "Diesel"] <- 1
+    }
+    
+    if("Crossover" %in% categories){
+      df[row_index, "Crossover"] <- 1
+    }
+    
+    if("Exotic" %in% categories){
+      df[row_index, "Exotic"] <- 1
+    }
+  }
+  
+  return(df)
+}
+
+
+
+```
+
+```{r}
+
+#library(stringr)
+Auto <- Market_categories_to_binary(df = Auto)
+
+
+Auto$Year <- as.factor(Auto$Year)
+
+write.csv(Auto, "New_Auto.csv")
+
+Auto$Year
+
+```
+
+
+
+```{r}
+#Braden Code
+avg_multiple_priced_duplicates <- function(df){
+  
+  count <- 0
+  
+  # Create a copy of the dataframe to edit
+  new_df <- df
+  
+  for(index in 1:nrow(df)){
+    
+    # Grab a dataframe row, which we will use to search for rows that are
+    # exactly the same, other than having a different MSRP
+    df_row <- df[index,]
+    
+    # Get a set of rows that are the same as  this one (other than different MSRP)
+    filtered_data <- filter_by_example(df=df, row_example=df_row)
+    
+    # Check how many rows matched df_row
+    num_matching_rows <- nrow(filtered_data)
+    
+    # If more than one (itself) matched... there are duplicates
+    if(num_matching_rows > 1){
+      
+      # Get the rownames for the duplicates
+      row_names <- rownames(filtered_data)
+      
+      # Grab the first row name, we will keep this one (arbitrary) and drop the others
+      first_row_name <- row_names[1]
+      
+      # Calculate the average price for these duplicate rows
+      average_price <- mean(filtered_data[,"MSRP"])
+      
+      # Set the MSRP for the first instance of these duplicates to the average
+      new_df[rownames(new_df) == first_row_name, "MSRP"] <- average_price
+      
+      # Remove the rest of the duplicates
+      removal_row_names <- row_names[row_names != first_row_name]
+      new_df <- new_df[!(rownames(new_df) %in%removal_row_names),]
+      
+      # Just for keeping track of how many things we remove, in case of troubleshooting.
+      count <- count + 1
+      
+    }
+  }
+  
+  return(new_df)
+}
+
+# index <- in 1:nrow(Auto)
+# df1_row <- Auto[]
+
+```
+
+```{r}
+#Braden Code
+
+filter_by_example <- function(df, row_example){
+  
+  filtered_df <- filter_all_columns(df=df,
+                                    Make=row_example$Make, 
+                                    Model=row_example$Model, 
+                                    Year=row_example$Year,
+                                    Engine.Fuel.Type=row_example$Engine.Fuel.Type,
+                                    Engine.HP=row_example$Engine.HP,
+                                    Engine.Cylinders=row_example$Engine.Cylinders,
+                                    Transmission.Type=row_example$Transmission.Type,
+                                    Driven_Wheels=row_example$Driven_Wheels,
+                                    Number.of.Doors=row_example$Number.of.Doors,
+                                    Market.Category=row_example$Market.Category,
+                                    Vehicle.Size=row_example$Vehicle.Size,
+                                    Vehicle.Style=row_example$Vehicle.Style,
+                                    highway.MPG=row_example$highway.MPG,
+                                    city.mpg=row_example$city.mpg,
+                                    Popularity=row_example$Popularity)
+  
+  return(filtered_df)
+  
+}
+
+filter_all_columns <- function(df, Make, Model, Year, Engine.Fuel.Type, Engine.HP, Engine.Cylinders, 
+                               Transmission.Type, Driven_Wheels, Number.of.Doors, Market.Category, Vehicle.Size, 
+                               Vehicle.Style, highway.MPG, city.mpg, Popularity){
+  
+  
+  f1 <- df[,"Make"] == Make
+  f2 <- df[,"Model"] == Model
+  f3 <- df[,"Year"] == Year
+  f4 <- df[,"Engine.Fuel.Type"] == Engine.Fuel.Type
+  f5 <- df[,"Engine.HP"] == Engine.HP
+  f6 <- df[,"Engine.Cylinders"] == Engine.Cylinders
+  f7 <- df[,"Transmission.Type"] == Transmission.Type
+  f8 <- df[,"Driven_Wheels"] == Driven_Wheels
+  f9 <- df[,"Number.of.Doors"] == Number.of.Doors
+  f10 <- df[,"Market.Category"] == Market.Category
+  f11 <- df[,"Vehicle.Size"] == Vehicle.Size
+  f12 <- df[,"Vehicle.Style"] == Vehicle.Style
+  f13 <- df[,"highway.MPG"] == highway.MPG
+  f14 <- df[,"city.mpg"] == city.mpg
+  f15 <- df[,"Popularity"] == Popularity
+  
+  full_filter <- (f1& f2& f3 & f4 & f5 & f6 & f7 & f8 & f9 & f10 & f11 & f12 & f13 & f14 & f15)
+  
+  filtered_df <- df[full_filter,]
+  
+  return(filtered_df)
+  
+}
+
+
+newAuto <- avg_multiple_priced_duplicates(df = Auto)
+# newAuto
+
+str(newAuto)
+```
+
+```{r}
+car_data %>%
+  select(Make, Model, MSRP) %>%
+  group_by(Make) %>%
+  summarize(count = n(), max = max(MSRP), min = min(MSRP)) %>%
+  arrange(count)
+```
+```{r}
+unique(Auto)
+
+#Auto[duplicated(Auto)]
+Auto %>% group_by_all() %>% filter(n()>1) %>% ungroup()
+
+index1 <- car_data %>% add_rownames %>% group_by_at(vars(-rowname)) %>% filter(n()>1) %>% pull(rowname)
+index1
+
+deduped_Auto = Auto[index1,]
+deduped_Auto 
+
+
+index2 = sample(1:dim(deduped_Auto)[1],replace=F)
+index2
+
+
+test_validate = car_data[-index,]
+
+Auto[-index2]
+
+str(deduped_Auto)
+
+Auto <- car_data
+
+df <- Auto %>% distinct()
+
+df
+
+
+
+write.csv(df, "test2.csv")
+```
+
+
+
