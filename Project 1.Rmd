@@ -640,6 +640,8 @@ newAuto <- avg_multiple_priced_duplicates(df = Auto)
 # newAuto
 
 str(newAuto)
+
+write.csv(newAuto, "Data.csv")
 ```
 
 ```{r}
