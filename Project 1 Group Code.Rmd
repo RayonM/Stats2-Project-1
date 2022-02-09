@@ -671,11 +671,15 @@ summary(final_model)
 par(mfrow=c(2,2))
 plot(final_model)
 
-
 ```
+# Test Final Model Against Test Data
 
+```{r}
+data_mod = data.frame(Predicted = predict(final_model,test), Observed = test$logMSRP)
 
-
-
-
-
+data_mod %>%
+  ggplot(aes(x = Predicted, y = Observed)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) +
+  ggtitle("Predictions vs Actual Values")
+```
