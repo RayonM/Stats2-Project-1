@@ -26,11 +26,11 @@ library("naniar")
 # Read Data <- This will be different for each of us.
 
 #Ely's read data line
-#car_data = read.csv("~/Desktop/applied_stats/data1.csv")
+car_data = read.csv("~/Desktop/applied_stats/data1.csv")
 
 # Rayon's read data line
-car_data <-  read.csv("data1.csv")
-attach(car_data)
+#car_data <-  read.csv("data1.csv")
+#attach(car_data)
 
 ```
 
@@ -331,26 +331,51 @@ filter_all_columns <- function(df, Make, Model, Year, Engine.Fuel.Type, Engine.H
 
 car_data1 <- avg_multiple_priced_duplicates(df=car_data)
 
-car_data1
-
 
 ```
 
+# Removing Electric Vehicles and outlier MSRP values
 
+```{r}
+ car_data_clean = car_data1 %>%
+  filter(Engine.Fuel.Type != 'electric') %>%
+  filter(MSRP > 2000) %>%
+  filter(MSRP < 500000)
+```
 
+# Transforming Response and Predictor Variables
+
+```{r}
+car_data_clean = 
+  car_data_clean %>%
+  mutate(logYear = log(Year)) %>%
+  mutate(logEngineHP = log(Engine.HP)) %>%
+  mutate(logMSRP = log(MSRP)) %>%
+  mutate(loghighwayMPG = log(highway.MPG)) %>%
+  mutate(logcitympg = log(city.mpg)) %>%
+  mutate(sqrtMSRP=sqrt(MSRP)) %>% 
+  mutate(invertedMSRP=1/MSRP) %>% 
+  mutate(Observation = n()) # Created to merge the data set to find leverage points
+  
+```
 
 
 # Training / Test Split
 
 ```{r}
+
+rows = count(car_data_clean)[1]
+train_rows = as.numeric(round(0.8*rows,0))
+test_validate_rows = as.numeric((rows - train_rows)/2)
+
 set.seed(1234)
-index = sample(1:dim(car_data)[1],9525,replace=F)
+index = sample(1:dim(car_data_clean)[1],train_rows,replace=F)
 
-train = car_data[index,]
-test_validate = car_data[-index,]
-test_index = sample(1:dim(test_validate)[1],1190,replace=F)
+train = car_data_clean[index,]
+test_validate = car_data_clean[-index,]
+test_index = sample(1:dim(test_validate)[1],test_validate_rows,replace=F)
 
-train = car_data[index,]
+train = car_data_clean[index,]
 test = test_validate[test_index,]
 validate = test_validate[-test_index,]
 
