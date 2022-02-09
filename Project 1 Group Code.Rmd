@@ -5,6 +5,7 @@ date: "2/1/2022"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -60,7 +61,7 @@ gg_miss_var(car_data)
 
 # Visualize the missing data. DOES NOT WORK
 
-vis_miss(new_AutoM) # Where is new_AutoM?
+#vis_miss(new_AutoM) # Where is new_AutoM?
 ```
 
 
@@ -225,6 +226,113 @@ head(
 #   1. We should remove all vehicles above $500,000. The data set of car beyond that point is very small. 
 #   2. We should eliminate duplicates. The data is filled with a lot of duplicate records.
 #   3. After this, we'll be left with what looks like duplicates but they won't. the records remaining will have some matches except on the MSRP column. We should average those and keep one with the mean MSRP.
+
+# Collaborated with Braden on this code chunk.
+
+avg_multiple_priced_duplicates <- function(df){
+  
+  count <- 0
+  
+  # Create a copy of the dataframe to edit
+  new_df <- df
+  
+  for(index in 1:nrow(df)){
+    
+    # Grab a dataframe row, which we will use to search for rows that are
+    # exactly the same, other than having a different MSRP
+    df_row <- df[index,]
+    
+    # Get a set of rows that are the same as  this one (other than different MSRP)
+    filtered_data <- filter_by_example(df=df, row_example=df_row)
+    
+    # Check how many rows matched df_row
+    num_matching_rows <- nrow(filtered_data)
+    
+    # If more than one (itself) matched... there are duplicates
+    if(num_matching_rows > 1){
+      
+      # Get the rownames for the duplicates
+      row_names <- rownames(filtered_data)
+      
+      # Grab the first row name, we will keep this one (arbitrary) and drop the others
+      first_row_name <- row_names[1]
+      
+      # Calculate the average price for these duplicate rows
+      average_price <- mean(filtered_data[,"MSRP"])
+      
+      # Set the MSRP for the first instance of these duplicates to the average
+      new_df[rownames(new_df) == first_row_name, "MSRP"] <- average_price
+      
+      # Remove the rest of the duplicates
+      removal_row_names <- row_names[row_names != first_row_name]
+      new_df <- new_df[!(rownames(new_df) %in%removal_row_names),]
+      
+      # Just for keeping track of how many things we remove, in case of troubleshooting.
+      count <- count + 1
+      
+    }
+  }
+  
+  return(new_df)
+}
+
+filter_by_example <- function(df, row_example){
+  
+  filtered_df <- filter_all_columns(df=df,
+                                    Make=row_example$Make, 
+                                    Model=row_example$Model, 
+                                    Year=row_example$Year,
+                                    Engine.Fuel.Type=row_example$Engine.Fuel.Type,
+                                    Engine.HP=row_example$Engine.HP,
+                                    Engine.Cylinders=row_example$Engine.Cylinders,
+                                    Transmission.Type=row_example$Transmission.Type,
+                                    Driven_Wheels=row_example$Driven_Wheels,
+                                    Number.of.Doors=row_example$Number.of.Doors,
+                                    Market.Category=row_example$Market.Category,
+                                    Vehicle.Size=row_example$Vehicle.Size,
+                                    Vehicle.Style=row_example$Vehicle.Style,
+                                    highway.MPG=row_example$highway.MPG,
+                                    city.mpg=row_example$city.mpg,
+                                    Popularity=row_example$Popularity)
+  
+  return(filtered_df)
+  
+}
+
+filter_all_columns <- function(df, Make, Model, Year, Engine.Fuel.Type, Engine.HP, Engine.Cylinders, 
+                               Transmission.Type, Driven_Wheels, Number.of.Doors, Market.Category, Vehicle.Size, 
+                               Vehicle.Style, highway.MPG, city.mpg, Popularity){
+  
+  
+  f1 <- df[,"Make"] == Make
+  f2 <- df[,"Model"] == Model
+  f3 <- df[,"Year"] == Year
+  f4 <- df[,"Engine.Fuel.Type"] == Engine.Fuel.Type
+  f5 <- df[,"Engine.HP"] == Engine.HP
+  f6 <- df[,"Engine.Cylinders"] == Engine.Cylinders
+  f7 <- df[,"Transmission.Type"] == Transmission.Type
+  f8 <- df[,"Driven_Wheels"] == Driven_Wheels
+  f9 <- df[,"Number.of.Doors"] == Number.of.Doors
+  f10 <- df[,"Market.Category"] == Market.Category
+  f11 <- df[,"Vehicle.Size"] == Vehicle.Size
+  f12 <- df[,"Vehicle.Style"] == Vehicle.Style
+  f13 <- df[,"highway.MPG"] == highway.MPG
+  f14 <- df[,"city.mpg"] == city.mpg
+  f15 <- df[,"Popularity"] == Popularity
+  
+  full_filter <- (f1& f2& f3 & f4 & f5 & f6 & f7 & f8 & f9 & f10 & f11 & f12 & f13 & f14 & f15)
+  
+  filtered_df <- df[full_filter,]
+  
+  return(filtered_df)
+  
+}
+
+
+car_data1 <- avg_multiple_priced_duplicates(df=car_data)
+
+car_data1
+
 
 ```
 
