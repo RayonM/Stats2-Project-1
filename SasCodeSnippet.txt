@@ -1,0 +1,332 @@
+/*
+The data set does not include electric cars (essentially, cars with 0 cylinders), MSRPs under $10,000 and over $500,000.
+The duplicate observations were removed and the MSRP became the average of the various MSRP.
+*/
+
+proc import 
+		datafile="/home/u58851510/Applied Statistics/Project 1/Tidy2Data.csv" DBMS=csv 
+		out=car_data1 replace;
+run;
+
+/*Print the data*/
+proc print data=car_data1;
+run;
+
+/* Create Log Variables for the Data set*/
+data car_data1;
+	set car_data1;
+	logYear=log(Year);
+	logEngineHP=log(EngineHP);
+	logMSRP=log(MSRP);
+	loghighwayMPG=log(highwayMPG);
+	logcitympg=log(citympg);
+	logEngineCylinders=log(EngineCylinders);
+	sqrtMSRP=SQRT(MSRP);
+	invertedMSRP=1/MSRP;
+	Observation = _N_; /* Created to merge the data set to find leverage points */
+run;
+
+/*Scatterplot of MSRP versus explanatory variables*/
+proc sgscatter data=car_data;
+	title "Scatterplot Matrix of Auto Variables";
+	matrix MSRP Year EngineHP EngineCylinders NumberofDoors highwayMPG citympg;
+run;
+
+/*Scatterplot of logMSRP versus log of all explanatory variables*/
+proc sgscatter data=car_data;
+	title "Scatterplot Matrix of Auto Variables";
+	matrix logMSRP logYear logEngineHP logEngineCylinders NumberofDoors 
+		loghighwayMPG logcitympg;
+run;
+
+**** PLOTS ******;
+*** EngineHp vs MSRP**;
+
+proc sgplot data=car_data;
+	title 'Plot of MSRP vs EngineHP';
+	scatter x=EngineHP y=MSRP / markerattrs=(color=blue symbol=circlefilled);
+	xaxis label='EngineHP';
+	yaxis label='Response Variable';
+run;
+
+**Categorical variable: VehicleStyle**;
+**logEngineHP vs. logMSRP;
+**Really good and strong relationship.**;
+
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+
+	/*Looking at this to see how it looks with the MSRP >10000 and No Electric Cars*/
+	title 'Plot of logMSRP vs logEngineHP';
+	scatter x=logEngineHP y=logMSRP / group=VehicleStyle 
+		markerattrs=(symbol=circlefilled);
+	xaxis label='logEngineHP';
+	yaxis label='logMSRP';
+run;
+
+**Categorical variable: EngineFuelType**;
+**Year**;
+*I didn't really see a correlation between Year and MSRP;
+
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+	title 'Plot of Year vs logMSRP';
+	scatter x=Year y=logMSRP / group=EngineFuelType 
+		markerattrs=(color=circlefilled);
+	xaxis label='Year';
+	yaxis label='logMSRP';
+run;
+
+**Categorical variable: VehicleSize**;
+
+/* EngineCylinders looks good when compared to logMSRP */
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+	title 'Plot of MSRP vs EngineHP';
+	scatter x=EngineCylinders y=logMSRP / group=VehicleSize 
+		markerattrs=(color=circlefilled);
+	xaxis label='EngineCylinders';
+	yaxis label='logMSRP';
+run;
+
+/*This variable looks really good when the electric cars are removed from the data and the citympg is logged.
+However, highwayMPG looks good too and they are correlated. */
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+	title 'Plot of MSRP vs EngineHP';
+	scatter x=logcitympg y=logMSRP / markerattrs=(color=circlefilled);
+	xaxis label='logcitympg';
+	yaxis label='Response Variable';
+run;
+
+/*HighwayMPG - in the model */
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+	title 'Plot of logMSRP vs HighwayMPG';
+	scatter x=highwayMPG y=logMSRP / markerattrs=(color=circlefilled);
+	xaxis label='highwayMPG';
+	yaxis label='logMSRP';
+	*/
+run;
+
+	/*Number of Doors - Out the model. No impact*/
+proc sgplot data=car_data;
+	Where MSRP > 10000 and EngineCylinders > 0;
+
+	/*title 'Plot of MSRP vs EngineHP';*/
+	scatter x=numberofdoors y=logMSRP / markerattrs=(color=circlefilled);
+
+	/* xaxis label='EngineHP';
+	yaxis label='Response Variable';*/
+run;
+
+/* Engine Cylinders have a trend but the electric cars are messing it up.*/
+proc sgscatter data=car_data;
+	title "Scatterplot Matrix of Auto Variables";
+	matrix logMSRP EngineCylinders;
+run;
+
+**PLOT**;
+
+proc sgplot data=car_data;
+	title 'Plot of MSRP vs EngineHP';
+	vbox MSRP /;
+run;
+
+**** MODEL ******;
+* Final VIF Test after looking at the scatterplots. Removed highwaympg, and logcylinders since they had surrogates in the model - citympg and Engine HP respectively;
+
+proc reg data=car_data1;
+	Model logMSRP=Year EngineHP EngineCylinders NumberofDoors citympg / vif;
+	run;
+	* Final VIF Test after looking at the scatterplots. Removed highwaympg, and logcylinders since they had surrogates in the model - citympg and Engine HP respectively.;
+	* LASSO Selection;
+
+PROC GLMSELECT data=car_data plots(stepaxis=number)=(criterionpanel ASEPlot);
+	partition fraction(test=.5);
+	Where Year > 2001;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle VehicleSize 
+		VehicleStyle;
+	Model logMSRP=Year EngineHP NumberofDoors citympg EngineFuelType 
+		TransmissionType DrivenWheels VehicleStyle / selection=lasso(choose=cv 
+		stop=AIC) CVDETAILS;
+run;
+
+* Model Selected by LASSO;
+
+PROC GLM data=car_data PLOTS(MAXPOINTS=50000)=ALL;
+	Where Year > 2001;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP=EngineHP NumberofDoors EngineFuelType TransmissionType 
+		DrivenWheels VehicleStyle;
+	run;
+	* Forward Selection ;
+
+PROC GLMSELECT data=car_data plots(stepaxis=number)=(criterionpanel ASEPlot);
+	partition fraction(test=.5);
+	Where MSRP > 10000;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle VehicleSize 
+		VehicleStyle;
+	Model logMSRP=Year EngineHP NumberofDoors citympg EngineFuelType 
+		TransmissionType DrivenWheels VehicleStyle / selection=forward (stop=none);
+run;
+
+* Model selected by Forward Selection;
+
+PROC GLM data=car_data PLOTS(MAXPOINTS=50000)=ALL;
+	Where MSRP > 10000;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP=Year EngineHP NumberofDoors citympg EngineFuelType 
+		TransmissionType DrivenWheels VehicleStyle;
+	run;
+
+
+
+
+
+
+
+/* Partition the data set into Train, Test, Validate */
+data Have;             /* the data to partition  */
+   set car_data1;  /* for example, use Heart data */
+run;
+/* If propTrain + propValid = 1, then no observation is assigned to testing */
+%let propTrain = 0.8;         /* proportion of trainging data */
+%let propValid = 0.1;         /* proportion of validation data */
+%let propTest = %sysevalf(1 - &propTrain - &propValid); /* remaining are used for testing */
+
+
+/* create a separate data set for each role */
+data Train Validate Test;
+array p[2] _temporary_ (&propTrain, &propValid);
+set Have;
+call streaminit(123);         /* set random number seed */
+/* RAND("table") returns 1, 2, or 3 with specified probabilities */
+_k = rand("Table", of p[*]);
+if      _k = 1 then output Train;
+else if _k = 2 then output Validate;
+else                output Test;
+drop _k;
+run;
+
+/*Test*/
+PROC GLMSELECT data = Train Testdata = Test Valdata= Validate PLOTS = ALL;
+	Class Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle VehicleSize;
+	Model logMSRP = Year NumberofDoors EngineHP EngineCylinders highwayMPG citympg Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle VehicleSize/ selection=lasso(choose=cv stop=ADJRSQ);
+run;
+
+PROC GLMSELECT data = Train Testdata = Test Valdata= Validate PLOTS(UNPACK) = ALL;
+	Class Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle ;
+	Model logMSRP = Year EngineHP EngineCylinders Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle/ selection=lasso(choose=cv stop=none);
+run;
+
+ods graphics on;
+
+
+PROC GLM data = car_data1 PLOTS(MAXPOINTS = 50000) = Diagnostics (label);
+	Class Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle ;
+	Model logMSRP = Year EngineHP EngineCylinders Make Model EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+run;
+
+*** This Model looks much better!!!;
+/***The above is a test based on a conversation with Dr. Turner.***/
+
+
+
+**Model Selection**;
+PROC GLMSELECT data = Train Testdata = Test Valdata= Validate PLOTS = ALL;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels VehicleStyle/ selection=lasso(choose=cv stop=none);
+run;
+
+
+PROC GLMSELECT data = Train Testdata = Test Valdata= Validate PLOTS = ALL;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels VehicleStyle/ selection=lasso(choose=cv stop=none);
+run;
+
+PROC GLMSELECT data = Train Testdata = Test PLOTS = ALL;
+	Class EngineFuelType TransmissionType DrivenWheels;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels / selection=lasso(choose=cv stop=none);
+run;
+
+
+PROC GLMSELECT data = train  plots(stepaxis = number) = (criterionpanel ASEPlot) seed = 1;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels VehicleStyle/ selection=lasso(choose=cv stop=ADJRSQ) CVDETAILS;
+run;
+
+PROC GLMSELECT data=car_data1 plots(stepaxis = number) = (criterionpanel ASEPlot) seed = 1;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels VehicleStyle / selection=forward(stop= ADJRSQ);
+run;
+
+PROC GLMSELECT data=car_data1 PLOTS= ALL;
+	Class EngineFuelType TransmissionType DrivenWheels VehicleStyle;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels VehicleStyle / selection=backward(stop= ADJRSQ);
+run;
+
+/***
+**Figure out which points are causing high leverage;
+PROC reg data=car_data1 PLOTS(MAXPOINTS = 50000 label)= ALL;
+	Where Observation not in (4312, 4319, 5279, 5359, 5358,5357,5356,5355,5354, 5353, 5352,5351,
+	5350, 5349,5281,5278,5279);
+	Model logMSRP = logEngineHP EngineCylinders highwayMPG;
+run;
+
+
+PROC reg data=car_data1 plots(MAXPOINTS = 50000 only label);
+	Where Observation not in (4312, 4319,5276, 5274, 5275, 5279, 4542, 4541,4540, 4539, 4537, 4538, 5273);
+	Model logMSRP = EngineHP EngineCylinders highwayMPG;
+run;
+**/
+
+** Model of Choice **;
+
+ods graphics on;
+
+/*What I chose for the Model */
+PROC GLM data = car_data1 PLOTS(MAXPOINTS = 50000)= DIAGNOSTICS;
+	Class EngineFuelType TransmissionType DrivenWheels;
+	Model logMSRP = EngineHP EngineCylinders highwayMPG EngineFuelType TransmissionType DrivenWheels Popularity;
+run;
+
+
+* Code for checking outliers;
+/*****************************************
+* Internet code - Used to analyze the outliers(cooks and Leverage);
+ods exclude all;
+proc reg data = train  plots(MAXPOINTS = 50000 only label) =(CooksD RStudentByLeverage);
+   model logMSRP = EngineHP logcitympg ;
+   ods output CooksDPlot = cookout RStudentByLeverage =RSOut;
+quit;
+ods exclude none;
+
+proc print data=cookout(obs=12); 
+   where Observation > 0;
+run;
+
+data All;
+merge car_data1 cookout RSOut;
+by Observation;
+*create a variable that indicates whether the obs has a large Cook's D stat;
+CooksDInf = (^missing(CooksD) & CooksDLabel^=.);
+label CooksDInf = "Influential (Cook's D)";
+run;
+ 
+proc print data=All noobs;
+   where CooksDInf > 0; 
+   var Observation EngineHP logcitympg logMSRP;
+run;
+ 
+proc sgplot data=All;
+   scatter x=EngineHP y=logMSRP / group=CooksDInf datalabel=CooksDLabel 
+                  markerattrs=(symbol=CircleFilled size=10);
+run;
+
+proc sgplot data=All;
+   scatter x=logcitympg y=logMSRP / group=CooksDInf datalabel=CooksDLabel 
+                  markerattrs=(symbol=CircleFilled size=10);
+run;
+
+******************************************************************/
