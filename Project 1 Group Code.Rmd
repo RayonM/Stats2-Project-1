@@ -339,8 +339,10 @@ car_data1 <- avg_multiple_priced_duplicates(df=car_data)
 ```{r}
  car_data_clean = car_data1 %>%
   filter(Engine.Fuel.Type != 'electric') %>%
-  filter(MSRP > 2000) %>%
-  filter(MSRP < 500000)
+  filter(MSRP > 10000) %>%
+  filter(MSRP < 150000)
+
+
 ```
 
 # Transforming Response and Predictor Variables
@@ -555,44 +557,6 @@ validate %>%
 # Removing them takes out A LOT of rows. Maybe best to just not include this attribute...
 ```
 
-# Predict.Regsubsets fxn
-
-```{r}
-predict.regsubsets =function (object , newdata ,id ,...){
-  form=as.formula (object$call [[2]])
-  mat=model.matrix(form ,newdata )
-  coefi=coef(object ,id=id)
-  xvars=names(coefi)
-  mat[,xvars]%*%coefi
-}
-```
-
-# Variable Selection (Not including market categories)
-
-## Ely Note: This seems wild. I'm clearly doing something wrong here
-
-```{r}
-library(leaps)
-reg.fwd = regsubsets(logMSRP~.,data=train[,c(3,4,6:9,11,13,15,19)],method="forward",nvmax=8)
-
-data
-
-
-testASE<-c()
-
-for (i in 1:8){
-  predictions<-predict.regsubsets(object=reg.fwd,newdata=test,id=i) 
-  testASE[i]<-mean((test$MSRP-predictions)^2)
-}
-
-par(mfrow=c(1,1))
-plot(1:8,testASE,type="l",xlab="# of predictors",ylab="test vs train ASE",ylim=c(0,3000000000))
-index<-which(testASE==min(testASE))
-points(index,testASE[index],col="red",pch=10)
-rss<-summary(reg.fwd)$rss
-lines(1:8,rss/9525,lty=3,col="blue")   #Dividing by 192 since ASE=RSS/sample size NEED TO ADJUST SAMPLE SIZE DIVISION!!!!
-```
-
 
 
 # Lasso Attempt
@@ -682,4 +646,6 @@ data_mod %>%
   geom_point() +
   geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) +
   ggtitle("Predictions vs Actual Values")
+
+
 ```
