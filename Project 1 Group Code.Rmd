@@ -17,6 +17,9 @@ library("ggplot2")
 library("GGally")
 library("naniar")
 library("caret")
+library("ggpubr")
+library("glmnet")
+library(car)
 
 ```
 
@@ -514,25 +517,39 @@ attributes = subset(train, select = c("Year","Transmission.Type","Driven_Wheels"
 
 pairs(attributes)
 
+
+
 p1 = attributes %>%
-  ggplot(aes(x = Driven_Wheels, y = logMSRP)) +
-  geom_boxplot()
+  ggplot(aes(x = reorder(Driven_Wheels, logMSRP), y = logMSRP)) +
+  geom_boxplot() +
+  ylab("Log MRSP") +
+  xlab("Number of Wheels") +
+  ggtitle("Number of Wheels vs Log MSRP")
 
 p2 = attributes %>%
   ggplot(aes(x = Year, y = logMSRP)) +
   geom_point(position = "jitter") +
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm") +
+  ylab("Log MRSP") +
+  xlab("Year") +
+  ggtitle("Year vs Log MSRP")
 
 
 p3 = attributes %>%
-  ggplot(aes(x = Transmission.Type, y = logMSRP)) +
-  geom_boxplot()
+  ggplot(aes(x = reorder(Transmission.Type, logMSRP), y = logMSRP)) +
+  geom_boxplot() +
+  ylab("Log MRSP") +
+  xlab("Transmission Type") +
+  ggtitle("Transmission Type vs Log MSRP")
 
 p4 = attributes %>%
-  ggplot(aes(x = Vehicle.Size, y = logMSRP)) +
-  geom_boxplot()
+  ggplot(aes(x = reorder(Vehicle.Size, logMSRP), y = logMSRP)) +
+  geom_boxplot() +
+  ylab("Log MRSP") +
+  xlab("Vehicle Size") +
+  ggtitle("Vehicle Size vs Log MSRP")
 
-
+ggarrange(p1,p2,p3,p4)
 
 ```
 
@@ -576,40 +593,25 @@ summary(lm(MSRP~Popularity, data = train))
 # Model Creation Work
 
 
-## Choosing potential predictors
+## Investigation of potential predictors noted in EDA
+
 ```{r}
+eda_attributes = subset(train, select = c("Year","Transmission.Type","Driven_Wheels","Engine.HP","Vehicle.Size","highway.MPG","Popularity","logMSRP"))
 
-# Checking for multicolinnearity - Not including Make, since it is dependent on popularity
 
-head(train[,c(3,4,6,7,8,9,10,11,13,19)])
-
-library(car)
-
-# All VIF is under 10 (though highway MPG is close), so we'll move forward with caution
-model_attributes = train[,c(3,4,6:11,13,15,19)]
-full.model<-lm(logMSRP~.,data=model_attributes)
+full.model<-lm(logMSRP~.,data=eda_attributes)
 vif(full.model)[,3]^2
 ```
-# Should we removing NA from Market Categories? Probably not.
 
-```{r}
-train %>%
-  filter(Market.Category != 'N/A')
-test %>%
-  filter(Market.Category != 'N/A')
-validate %>%
-  filter(Market.Category != 'N/A')
+**Findings**
 
-# Removing them takes out A LOT of rows. Maybe best to just not include this attribute...
-```
-
+We're not seeing much evidence of collinearity between these attributes, which is a good sign. We'll likely include these in our final model. Other attributes will be found through variable selection techniques.
 
 
 # Lasso Variable Selectioin
 
 ```{r}
-library(glmnet)
-#Formatting data for GLM net
+
 x=model.matrix(logMSRP~.,train[,c(3,4,6:9,11,13,15,19)])[,-1]
 y=train$MSRP
 
@@ -632,7 +634,8 @@ coef(lasso.mod,s=bestlambda)
 ```
 
 
-# Here's the model LASSO picked - obviously some major collinearities here. Need to work through!
+# LASSO Model - to be used as a reference for final model selection
+
 ```{r}
 model = lm(logMSRP~ Engine.Fuel.Type + Engine.Cylinders+Transmission.Type+Driven_Wheels+Number.of.Doors+Vehicle.Size+highway.MPG+Popularity, data = train)
 
@@ -640,41 +643,13 @@ summary(model)
 
 par(mfrow=c(2,2))
 plot(model)
-
-
-# Slight adjustment - removed obvious collinearities. Still need work
-
-model = lm(MSRP~Model + Year + Engine.Fuel.Type + Engine.Cylinders+Transmission.Type+Driven_Wheels+Number.of.Doors+Market.Category+Vehicle.Style+highway.MPG+Popularity, data = train)
-
-summary(model)
-
-par(mfrow=c(2,2))
-plot(model)
-
-
 ```
 
-### This model still is not great - I wonder if we should adjust our response variable ...
-### Seeing evidence of violations of normality and equal variance
 
-
+# Final Model
 
 ```{r}
-# Logged the response variable but seeing a sharp band in teh Residuals. The qqplot looks a lot better. However, we can see that there are some outliers in the data. Maybe we should some more cleaning. Left a comment up above.
 
-
-logmodel = lm(logMSRP~Year+Transmission.Type+Driven_Wheels+Number.of.Doors+Vehicle.Size+Popularity, data = train)
-summary(logmodel)
-par(mfrow=c(2,2))
-plot(logmodel)
-
-
-```
-
-# Final model suggestion
-```{r}
-
-# This is very similar to the above model, but I included horsepower and highway.MPG
 
 final_model = lm(logMSRP~Year+Transmission.Type+Driven_Wheels+Engine.HP+Number.of.Doors+Vehicle.Size+highway.MPG+Popularity, data = train)
 summary(final_model)
@@ -682,6 +657,7 @@ par(mfrow=c(2,2))
 plot(final_model)
 
 ```
+
 # Test Final Model Against Test Data
 
 ```{r}
