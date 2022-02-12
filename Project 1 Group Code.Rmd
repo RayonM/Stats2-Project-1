@@ -341,8 +341,6 @@ car_data1 <- avg_multiple_priced_duplicates(df=car_data)
   filter(Engine.Fuel.Type != 'electric') %>%
   filter(MSRP > 10000) %>%
   filter(MSRP < 150000)
-
-
 ```
 
 # Transforming Response and Predictor Variables
@@ -401,13 +399,29 @@ pairs(train[,c(16,3,5,6,9,13,14,15)])
 **Initial Findings**
 
   * City and highway mpg are highly correlated.
-  * Rayon - I agree with this. 
  
-  * Seeing some correlation between HP, Cylinders, and MPG (highway and city) as well
-  * Rayon - I agree with this.
+  * Seeing some correlation between HP and Cylinders as well
  
 ```{r}
 pairs(train[,c(15,5,6,13,14)])
+
+# City vs Highway MPG
+train %>%
+  ggplot(aes(x = highway.MPG, y = city.mpg)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  xlab("Highway MPG") +
+  ylab("City MPG") +
+  ggtitle("City MPG vs Highway MPG")
+
+# Horsepower vs Cylinders
+train %>%
+  ggplot(aes(x = Engine.Cylinders, y = Engine.HP)) +
+  geom_boxplot() +
+  xlab("Cylinders") +
+  ylab("Horsepower") +
+  ggtitle("Cylinders vs Horsepower")
+
 ```
 
 **Findings**
