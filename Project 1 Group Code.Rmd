@@ -16,6 +16,7 @@ library("tidyverse")
 library("ggplot2")
 library("GGally")
 library("naniar")
+library("caret")
 
 ```
 
@@ -504,6 +505,38 @@ train %>%
   xlab("Log Horsepower") +
   ggtitle("MSRP vs Horsepower")
 ```
+
+# Potential Predictors
+
+```{r}
+
+attributes = subset(train, select = c("Year","Transmission.Type","Driven_Wheels","Engine.HP","Number.of.Doors","Vehicle.Size","highway.MPG","Popularity","logMSRP"))
+
+pairs(attributes)
+
+p1 = attributes %>%
+  ggplot(aes(x = Driven_Wheels, y = logMSRP)) +
+  geom_boxplot()
+
+p2 = attributes %>%
+  ggplot(aes(x = Year, y = logMSRP)) +
+  geom_point(position = "jitter") +
+  geom_smooth(method = "lm")
+
+
+p3 = attributes %>%
+  ggplot(aes(x = Transmission.Type, y = logMSRP)) +
+  geom_boxplot()
+
+p4 = attributes %>%
+  ggplot(aes(x = Vehicle.Size, y = logMSRP)) +
+  geom_boxplot()
+
+
+
+```
+
+
 ## Importance of Popularity:
 
 #### Popularity is broken down by make - not by model. Also, no two makes have the same popularity. This means that popularity has a 1-1 relationship with Make, so we only need one of them
@@ -663,8 +696,17 @@ data_mod %>%
 
 ```
 
+
+
+
+
+
+
+# BEGIN PART 2
+
+
 ```{r}
-library(caret)
+
 
 train_ = subset(train, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "MSRP"))
 train_$city.mpg = log(train_$city.mpg)
