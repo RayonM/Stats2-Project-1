@@ -750,11 +750,12 @@ validation_ase_knn = mean(train_$MSRP - knn_pred_validation)^2
 
 validation_ase_knn
 
-plot(knn_pred_validation, validation_$MSRP)
+plot(knn_pred_validation, validation_$MSRP, main = "Predicted vs Actual")
 lines(0:2000, 0:2000)
 
 varImp(knn_model)
-plot(varImp(knn_model), main = "Importance of Varibales for the KNN Model")
+plot(varImp(knn_model), main = "Importance of Variables for the KNN Model")
+
 ```
 
 
@@ -796,10 +797,75 @@ validation_ase_reg_tree = mean(train_$logMSRP - predict(reg_tree_model, validati
 
 validation_ase_reg_tree
 
-plot(reg_tree_pred, validation_$logMSRP)
+plot(reg_tree_pred, validation_$logMSRP, main = "Predicted vs Actual")
 lines(0:2000, 0:2000)
 
 varImp(reg_tree_model)
 
 plot(varImp(reg_tree_model), main = "Importance of Variables of Regression Tree Model")
+```
+
+# Model Comparisons
+
+```{r}
+# Final Model
+
+test_ase_final_model = mean(train$logMSRP - predict(final_model, test))^2
+
+final_model_pred = predict(final_model, validate)
+final_model_validate = postResample(pred = final_model_pred, obs = validate$logMSRP)
+
+validation_ase_final_model = mean(train$logMSRP - predict(final_model, validate))^2
+
+test_ase_final_model
+validation_ase_final_model
+final_model_validate
+
+
+
+
+# Complex Model
+
+test_ase_complex_model = mean(train$logMSRP - predict(complex_model, test))^2
+
+complex_model_pred = predict(complex_model, validate)
+complex_model_validate = postResample(pred = complex_model_pred, obs = validate$logMSRP)
+
+validation_ase_complex_model = mean(train$logMSRP - predict(complex_model, validate))^2
+
+test_ase_complex_model
+validation_ase_complex_model
+complex_model_validate
+
+
+# KNN Model
+
+test_ase_knn = mean(train_$logMSRP - predict(reg_tree_model, test_))^2
+
+knn_pred = predict(knn_model, validation_)
+knn_validate = postResample(pred = knn_pred, obs = validation_$logMSRP)
+
+validation_ase_knn = mean(train_$logMSRP - predict(knn_model, validation_))^2
+
+test_ase_knn
+validation_ase_knn
+knn_validate
+
+
+#Regression Tree Model
+
+test_ase_ref_tree = mean(train_$logMSRP - predict(reg_tree_model, test_))^2
+
+reg_tree_pred = predict(reg_tree_model, validation_)
+reg_tree_validate = postResample(pred = reg_tree_pred, obs = validation_$logMSRP)
+
+validation_ase_reg_tree = mean(train_$logMSRP - predict(reg_tree_model, validation_))^2
+
+test_ase_ref_tree
+validation_ase_reg_tree
+reg_tree_validate
+
+
+
+
 ```
