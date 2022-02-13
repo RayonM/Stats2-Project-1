@@ -1,10 +1,13 @@
 ---
 title: "Project 1 Group Code"
 author: "Ely, Kalen, Rayon"
-date: "2/1/2022"
-output: html_document
+date: ''
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+fig_caption: yes
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -27,14 +30,11 @@ library(car)
 
 
 ```{r}
-# Read Data <- This will be different for each of us.
 
-#Ely's read data line
+#Read Data
 car_data = read.csv("~/Desktop/applied_stats/data1.csv")
 
-# Rayon's read data line
-#car_data <-  read.csv("data1.csv")
-#attach(car_data)
+head(car_data)
 
 ```
 
@@ -97,8 +97,8 @@ car_data[(is.na(car_data$Number.of.Doors)&car_data$Make=='Ferrari'),9] = 2
 
 # Engine Cylinders
 
-car_data %>%
-  filter(is.na(Engine.Cylinders))
+head(car_data %>%
+  filter(is.na(Engine.Cylinders)))
 
 
 # Mazda RX Models - These have a rotary engine, so have 0 cylinders
@@ -116,38 +116,38 @@ car_data[(is.na(car_data$Engine.Cylinders) & car_data$Engine.Fuel.Type == 'elect
 
 # Engine Horsepower
 
-car_data %>%
-  filter(is.na(Engine.HP))
+head(car_data %>%
+  filter(is.na(Engine.HP)))
 
 #  Using the base horsepower I can find online for these Some versions have higher horsepower, but this data set does not give us the attributes needed to identify these.
 
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2014),5] = 302
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2015),5] = 329
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & Year == 2016),5] = 315
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2015),5] = 111
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2016),5] = 111
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & Year == 2017),5] = 111
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Continental' & Year == 2017),5] =305
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Escape' & Year == 2017),5] = 168
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & Year == 2013),5] = 123
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & Year == 2014),5] = 123
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2015),5] = 123
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2016),5] = 123
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & Year == 2017),5] = 123
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Freestar' & Year == 2005),5] = 193
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='i-MiEV' & Year == 2014),5] = 66
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2015),5] = 195
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2016),5] = 196
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & Year == 2017),5] = 197
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2014),5] = 107
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2015),5] = 107
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & Year == 2016),5] = 107
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='M-Class' & Year == 2015),5] = 302
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='MKZ' & Year == 2017),5] = 240
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & Year == 2013),5] = 154
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & Year == 2014),5] = 154
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & Year == 2015),5] = 109
-car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & Year == 2016),5] = 109
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & car_data$Year == 2014),5] = 302
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & car_data$Year == 2015),5] = 329
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Model S' & car_data$ear == 2016),5] = 315
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & car_data$Year == 2015),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & car_data$Year == 2016),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='500e' & car_data$Year == 2017),5] = 111
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Continental' & car_data$Year == 2017),5] =305
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Escape' & car_data$Year == 2017),5] = 168
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & car_data$Year == 2013),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Fit EV' & car_data$Year == 2014),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & car_data$Year == 2015),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & car_data$Year == 2016),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Focus' & car_data$Year == 2017),5] = 123
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Freestar' & car_data$Year == 2005),5] = 193
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='i-MiEV' & car_data$Year == 2014),5] = 66
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & car_data$Year == 2015),5] = 195
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & car_data$Year == 2016),5] = 196
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Impala' & car_data$Year == 2017),5] = 197
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & car_data$Year == 2014),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & car_data$Year == 2015),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Leaf' & car_data$Year == 2016),5] = 107
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='M-Class' & car_data$Year == 2015),5] = 302
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='MKZ' & car_data$Year == 2017),5] = 240
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & car_data$Year == 2013),5] = 154
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='RAV4 EV' & car_data$Year == 2014),5] = 154
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & car_data$Year == 2015),5] = 109
+car_data[(is.na(car_data$Engine.HP) & car_data$Model=='Soul EV' & car_data$Year == 2016),5] = 109
 
 
 
@@ -161,8 +161,8 @@ sapply(car_data, function(x) sum(is.na(x)))
 ```{r}
 # Unnown Transmission Types
 
-car_data %>%
-  filter(Transmission.Type == 'UNKNOWN')
+head(car_data %>%
+  filter(Transmission.Type == 'UNKNOWN'))
 
 # Based off of other RAM 150s
 car_data[(car_data$Transmission.Type == 'UNKNOWN' & car_data$Model=='RAM 150'),7] = 'MANUAL'
@@ -194,22 +194,22 @@ summary(car_data)
 # Seeing odd values for max HP, Engine Cylinders,MPG, and MSRP
 
 # HP and MSRP looks correct
-car_data %>%
-  filter(Engine.HP > 700)
+head(car_data %>%
+  filter(Engine.HP > 700))
 
 # Cylinders looks correct based on car and HP
-car_data %>%
-  filter(Engine.Cylinders > 10)
+head(car_data %>%
+  filter(Engine.Cylinders > 10))
 
 # Highway MPG for this item is false - manual fix based on online research
-car_data %>%
-  filter(highway.MPG > 300)
+head(car_data %>%
+  filter(highway.MPG > 300))
 
 car_data[car_data$highway.MPG == 354,13] = 32
 
 # All high city mpgs are electric, as expected
-car_data %>%
-  filter(city.mpg > 100)
+head(car_data %>%
+  filter(city.mpg > 100))
 
 
 # N/A Strings in Market Category
@@ -222,14 +222,10 @@ head(
     )
 ```
 
-
+# Accounting for duplicate entries with differing MSRP values
 
 ```{r}
-# Added this section for Further data cleaning.
-# Thoughts:
-#   1. We should remove all vehicles above $500,000. The data set of car beyond that point is very small. 
-#   2. We should eliminate duplicates. The data is filled with a lot of duplicate records.
-#   3. After this, we'll be left with what looks like duplicates but they won't. the records remaining will have some matches except on the MSRP column. We should average those and keep one with the mean MSRP.
+
 
 # Collaborated with Braden on this code chunk.
 
@@ -767,7 +763,7 @@ plot(varImp(knn_model), main = "Importance of Variables for the KNN Model")
 
 fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
 reg_tree_model = train(logMSRP~., data = train_, method = "rpart", minsplit = 5, trControl = fitControl,
-                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07,.08,.09,.25,.04)))
+                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07,.08,.09,.25,.4)))
 
 
 
@@ -864,8 +860,6 @@ validation_ase_reg_tree = mean(train_$logMSRP - predict(reg_tree_model, validati
 test_ase_ref_tree
 validation_ase_reg_tree
 reg_tree_validate
-
-
 
 
 ```
