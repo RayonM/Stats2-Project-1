@@ -696,9 +696,6 @@ data_mod %>%
 
 
 
-# BEGIN PART 2
-
-
 ```{r}
 
 set.seed(1)
@@ -723,18 +720,18 @@ validation_$MSRP = validation_$logMSRP
 
 ```
 
-
-```{r}
 ##KNN Model
 
+```{r}
 fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
-knn_model = train(logMSRP ~ ., data = train_, method = "knn", trControl = fitControl, preProcess = c("center","scale"), tuneLength = 20)
+knn_model = train(logMSRP~., data = train_, method = "knn", preProcess = c("center", "scale"), trControl = fitControl, tuneGrid = data.frame(k = c(1:10, 15, 20, 25, 30)))
+
 
 plot(knn_model, main = "RMSE per Neighbors of KNN Regression model")
 
 ```
-
+ # Testing Knn Model against test and validation sets
 
 ```{r}
 knn_pred_test = predict(knn_model, test_)
@@ -764,86 +761,25 @@ plot(varImp(knn_model), main = "Importance of Varibales for the KNN Model")
 
 # Regression Tree
 
-```{r}
-fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
-reg_tree_model = train(MSRP~., data = train_, method = "rpart", minsplit = 5, trControl = fitcontrol,
-                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07.08.09.,.25,.04)))
-
-
-
-plot(reg_tree_model, main = "RMSE per Complexity Parameter of Regression Tree Model")
-
-```
-# BEGIN PART 2
-
-
-```{r}
-
-
-train_ = subset(train, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "MSRP"))
-train_$city.mpg = log(train_$city.mpg)
-train_MSRP = log(train_$MSRP)
-test_ = subset(test, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "MSRP"))
-test_$city.mpg = log(test_$city.mpg)
-test_MSRP = log(test_$MSRP)
-validation_ = subset(validate, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "MSRP"))
-validation_$city.mpg = log(validation_$city.mpg)
-```
-
-##KNN Model
-
-```{r}
-fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
-knn_model = train(MSRP~., data = train_, method = "knn", preProcess = c("center", "scale"), trControl = fitControl, tuneGrid = data.frame(l = c(1:10, 15, 20, 25, 30)))
-knn_model
-
-plot(knn_model, main = "RMSE per Neighbors of KNN Regression model")
-
-
-#test_ase_knn
-
-
-```
-
-
-
-# Making Predicitons on the validation set
-
-```{r}
-knn_pred_validation = predict(Knn_model, validation_)
-
-#Error metrics
-knn_validate = postResample(pred = knn_pred_validation, obs = validation_$MSRP)
-
-validation_ase_knn = mean(train_$MSRP - predict(knn_model, validation_))^2
-
-validation_ase_knn
-
-plot(knn_pred_validation, validation_$MSRP)
-lines(0:2000, 0:2000)
-
-varImp(knn_model)
-plot(varImp(knn_model), main = "Importance of Varibales for the KNN Model")
-
-```
-
-# Regression Tree
-
 
 ```{r}
 
 fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
-reg_tree_model = train(MSRP~., data = train_, method = "rpart", minsplit = 5, trControl = fitcontrol,
-                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07.08.09.,.25,.04)))
+reg_tree_model = train(logMSRP~., data = train_, method = "rpart", minsplit = 5, trControl = fitControl,
+                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07,.08,.09,.25,.04)))
 
 
 
 plot(reg_tree_model, main = "RMSE per Complexity Parameter of Regression Tree Model")
 
 
+```
 
+# Testing Regression Tree model against test and validation sets
 
-test_ase_ref_tree = mean((train_$MSRP - predict(reg_tree_model, test_))^2)
+```{r}
+
+test_ase_ref_tree = mean(train_$logMSRP - predict(reg_tree_model, test_))^2
 
 
 test_ase_ref_tree
@@ -853,17 +789,17 @@ plot(reg_tree_model$finalModel, main = "Final Regression Tree Model")
 
 reg_tree_pred = predict(reg_tree_model, validation_)
 
-reg_tree_validate = postResample(pred = reg_tree_pred, obs = validation_$MSRP)
+reg_tree_validate = postResample(pred = reg_tree_pred, obs = validation_$logMSRP)
 reg_tree_validate
 
-validation_ase_reg_tree = mean((train_$MSRP - predict(reg_tree_model, validation_))^2)
+validation_ase_reg_tree = mean(train_$logMSRP - predict(reg_tree_model, validation_))^2
 
 validation_ase_reg_tree
 
-plot(reg_tree_pred, validation_$MSRP)
+plot(reg_tree_pred, validation_$logMSRP)
 lines(0:2000, 0:2000)
 
 varImp(reg_tree_model)
 
-plot(varImp(reg_tree_model), main = "Importaance of Variable of Regressopm Tree Model")
+plot(varImp(reg_tree_model), main = "Importance of Variables of Regression Tree Model")
 ```
