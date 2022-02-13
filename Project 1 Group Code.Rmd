@@ -653,9 +653,11 @@ plot(model)
 
 final_model = lm(logMSRP~Year+Transmission.Type+Driven_Wheels+Engine.HP+Number.of.Doors+Vehicle.Size+highway.MPG+Popularity, data = train)
 summary(final_model)
+confint(final_model)
 par(mfrow=c(2,2))
 plot(final_model)
 
+summary(train)
 ```
 
 # Test Final Model Against Test Data
@@ -673,11 +675,105 @@ data_mod %>%
 ```
 
 
+# Part 2
+
+## Complex model creation:
+
+```{r}
+complex_model = lm(logMSRP~Year+Transmission.Type+Driven_Wheels + +logEngineHP+Number.of.Doors+Vehicle.Size+highway.MPG+Popularity+ I(Number.of.Doors^2) + logEngineHP*highway.MPG + Year*highway.MPG + Year*Popularity, data = train)
+
+plot(complex_model)
+summary(complex_model)
+
+data_mod = data.frame(Predicted = predict(complex_model,test), Observed = test$logMSRP)
+
+data_mod %>%
+  ggplot(aes(x = Predicted, y = Observed)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) +
+  ggtitle("Predictions vs Actual Values")
+```
 
 
 
+# BEGIN PART 2
 
 
+```{r}
+
+set.seed(1)
+
+colSums(is.na(train))
+
+colSums(is.na(test))
+
+head(train)
+
+colSums(is.na(validate))
+train_ = subset(train, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "logMSRP"))
+train_$city.mpg = log(train_$city.mpg)
+train_MSRP = train_$logMSRP
+test_ = subset(test, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "logMSRP"))
+test_$city.mpg = log(test_$city.mpg)
+test_$city.mpg = log(test_$city.mpg)
+test_MSRP = test_$logMSRP
+validation_ = subset(validate, select = c("Engine.HP", "Number.of.Doors", "city.mpg", "Popularity", "logMSRP"))
+validation_$city.mpg = log(validation_$city.mpg)
+validation_$MSRP = validation_$logMSRP
+
+```
+
+
+```{r}
+##KNN Model
+
+fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+
+knn_model = train(logMSRP ~ ., data = train_, method = "knn", trControl = fitControl, preProcess = c("center","scale"), tuneLength = 20)
+
+plot(knn_model, main = "RMSE per Neighbors of KNN Regression model")
+
+```
+
+
+```{r}
+knn_pred_test = predict(knn_model, test_)
+
+test_ase_knn = mean(train_$logMSRP - knn_pred_test)^2
+
+test_ase_knn
+
+
+knn_pred_validation = predict(knn_model, validation_)
+
+#Error metrics
+knn_validate = postResample(pred = knn_pred_validation, obs = validation_$MSRP)
+
+validation_ase_knn = mean(train_$MSRP - knn_pred_validation)^2
+
+validation_ase_knn
+
+plot(knn_pred_validation, validation_$MSRP)
+lines(0:2000, 0:2000)
+
+varImp(knn_model)
+plot(varImp(knn_model), main = "Importance of Varibales for the KNN Model")
+```
+
+
+
+# Regression Tree
+
+```{r}
+fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+reg_tree_model = train(MSRP~., data = train_, method = "rpart", minsplit = 5, trControl = fitcontrol,
+                       tuneGrid = data.frame(cp=c(.005,.0008,.01,.015,.02,.025,.03,.035,.04,.05,.06,.07.08.09.,.25,.04)))
+
+
+
+plot(reg_tree_model, main = "RMSE per Complexity Parameter of Regression Tree Model")
+
+```
 # BEGIN PART 2
 
 
